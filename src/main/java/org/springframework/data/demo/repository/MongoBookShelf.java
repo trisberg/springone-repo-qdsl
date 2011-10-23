@@ -13,6 +13,8 @@ import org.springframework.data.demo.domain.Book;
 import org.springframework.data.demo.domain.QBook;
 import org.springframework.stereotype.Repository;
 
+import com.mysema.query.BooleanBuilder;
+
 @Repository
 public class MongoBookShelf implements BookShelf {
 
@@ -48,7 +50,6 @@ public class MongoBookShelf implements BookShelf {
 		 return bookRepository.findAll();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public List<Book> findByCategoriesOrYear(Set<String> categories, String year) {
 		Date startDate = null;
@@ -62,8 +63,12 @@ public class MongoBookShelf implements BookShelf {
 		QBook book = new QBook("book");
 		if (startDate != null) {
 			if (categories != null && categories.size() > 0) {
-				return bookRepository.findAll(
-						book.published.after(startDate).and(book.categories.in(categories)));
+				BooleanBuilder bb = new BooleanBuilder();
+				for (String s : categories) {
+					bb.or(book.categories.contains(s));
+				}
+				bb.and(book.published.after(startDate));
+				return bookRepository.findAll(bb.getValue());
 			}
 			else {
 				return bookRepository.findAll(book.published.after(startDate));
@@ -71,7 +76,11 @@ public class MongoBookShelf implements BookShelf {
 		}
 		else {
 			if (categories != null && categories.size() > 0) {
-				return bookRepository.findAll(book.categories.in(categories));
+				BooleanBuilder bb = new BooleanBuilder();
+				for (String s : categories) {
+					bb.or(book.categories.contains(s));
+				}
+				return bookRepository.findAll(bb.getValue());
 			}
 			else {
 				return findAll();

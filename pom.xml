@@ -14,7 +14,7 @@
 		<org.cloudfoundry-version>0.8.1</org.cloudfoundry-version>
 		<org.aspectj-version>1.6.11</org.aspectj-version>
 		<org.slf4j-version>1.5.10</org.slf4j-version>
-		<querydsl.version>2.2.2</querydsl.version>
+		<querydsl.version>2.2.3</querydsl.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<dependencies>
