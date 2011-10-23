@@ -14,6 +14,8 @@ import org.springframework.data.demo.domain.QBook;
 import org.springframework.stereotype.Repository;
 
 import com.mysema.query.BooleanBuilder;
+import com.mysema.query.types.Predicate;
+import com.mysema.query.types.expr.BooleanExpression;
 
 @Repository
 public class MongoBookShelf implements BookShelf {
@@ -63,29 +65,39 @@ public class MongoBookShelf implements BookShelf {
 		QBook book = new QBook("book");
 		if (startDate != null) {
 			if (categories != null && categories.size() > 0) {
-				BooleanBuilder bb = new BooleanBuilder();
-				for (String s : categories) {
-					bb.or(book.categories.contains(s));
-				}
-				bb.and(book.published.after(startDate));
-				return bookRepository.findAll(bb.getValue());
+				BooleanExpression publishedAfter = book.published.after(startDate);
+				Predicate bookCategoryMatches = buildBookCategoryPredicate(categories, book);
+				return bookRepository.findAll(publishedAfter.and(bookCategoryMatches));
 			}
 			else {
-				return bookRepository.findAll(book.published.after(startDate));
+				BooleanExpression publishedAfter = book.published.after(startDate);
+				return bookRepository.findAll(publishedAfter);
 			}
 		}
 		else {
 			if (categories != null && categories.size() > 0) {
-				BooleanBuilder bb = new BooleanBuilder();
-				for (String s : categories) {
-					bb.or(book.categories.contains(s));
-				}
-				return bookRepository.findAll(bb.getValue());
+				Predicate bookCategoryMatches = buildBookCategoryPredicate(categories, book);
+				return bookRepository.findAll(bookCategoryMatches);
 			}
 			else {
 				return findAll();
 			}
 		}
+	}
+
+	private Predicate buildBookCategoryPredicate(Set<String> categories, QBook book) {
+		//TODO: this doesn't work for more than two categories, need better solution
+		BooleanBuilder bookCategoryBuilder = null;
+		for (String category : categories) {
+			if (bookCategoryBuilder == null) {
+				bookCategoryBuilder = new BooleanBuilder(book.categories.contains(category));
+			}
+			else {
+				bookCategoryBuilder.or(book.categories.contains(category));
+			}
+		}
+		Predicate bookCategoryMatches = bookCategoryBuilder.getValue();
+		return bookCategoryMatches;
 	}
 
 	private void lookUpAuthor(Book book) {
